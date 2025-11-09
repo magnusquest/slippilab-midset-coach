@@ -99,4 +99,18 @@ function Close(props: { children: JSX.Element }) {
   return <button {...parts.api().closeButtonProps}>{props.children}</button>;
 }
 
-export const Dialog = Object.assign(Base, { Trigger, Title, Contents, Close });
+function useDialogApi() {
+  const parts = useContext(DialogPartsContext);
+  if (!parts) {
+    throw new Error("useDialogApi used outside <Dialog>");
+  }
+  return parts.api;
+}
+
+export const Dialog = Object.assign(Base, {
+  Trigger,
+  Title,
+  Contents,
+  Close,
+  useDialogApi,
+});

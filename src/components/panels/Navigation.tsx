@@ -3,6 +3,7 @@ import {
   ControllerIcon,
   FilmSlateIcon,
   GitHubIcon,
+  CoachIcon,
   TwitterIcon,
   VideoLibraryIcon,
 } from "~/components/common/icons";
@@ -47,6 +48,14 @@ export function Navigation() {
                 "bg-slippi-50": currentSidebar() === "inputs",
               }}
               onClick={() => setSidebar("inputs")}
+            />
+            <CoachIcon
+              title="Coach"
+              classList={{
+                "py-4 cursor-pointer -mx-7 px-7": true,
+                "bg-slippi-50": currentSidebar() === "coach",
+              }}
+              onClick={() => setSidebar("coach")}
             />
           </div>
         </div>

@@ -3,6 +3,7 @@ import { createStore } from "solid-js/store";
 import { ProgressCircle } from "~/components/common/ProgressCircle";
 import { createToast, dismissToast } from "~/components/common/toaster";
 import { send } from "~/workerClient";
+import { scheduleReviewPrompt } from "~/state/reviewNotesStore";
 import { ReplayStub } from "~/state/selectionStore";
 
 export interface FileStore {
@@ -76,5 +77,12 @@ export async function load(files: File[], startFrame?: number): Promise<void> {
       duration: 2000,
       placement: "top-end",
     });
+  }
+
+  if (goodFilesAndSettings.length > 0) {
+    const latestStub = goodFilesAndSettings.at(-1)?.[1];
+    if (latestStub) {
+      scheduleReviewPrompt(latestStub.fileName);
+    }
   }
 }
