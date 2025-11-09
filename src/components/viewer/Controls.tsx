@@ -19,6 +19,18 @@ import {
 } from "~/state/replayStore";
 import { currentSelectionStore } from "~/state/selectionStore";
 
+/**
+ * Determines if keyboard shortcuts should be ignored because
+ * the user is typing in a text input field.
+ */
+function isTypingInTextBox(): boolean {
+  const activeElement = document.activeElement;
+  return (
+    activeElement instanceof HTMLInputElement ||
+    activeElement instanceof HTMLTextAreaElement
+  );
+}
+
 export function Controls() {
   onMount(() => {
     window.addEventListener("keydown", onKeyDown);
@@ -30,6 +42,11 @@ export function Controls() {
   });
 
   function onKeyDown({ key }: KeyboardEvent): void {
+    // Ignore all keyboard shortcuts when typing in text fields
+    if (isTypingInTextBox()) {
+      return;
+    }
+
     switch (key) {
       case "k":
       case "K":
@@ -110,6 +127,11 @@ export function Controls() {
   }
 
   function onKeyUp({ key }: KeyboardEvent): void {
+    // Ignore all keyboard shortcuts when typing in text fields
+    if (isTypingInTextBox()) {
+      return;
+    }
+
     switch (key) {
       case "ArrowUp":
       case "ArrowDown":

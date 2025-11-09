@@ -72,6 +72,16 @@ export function ChatInterface(props: ChatInterfaceProps) {
         <textarea
           value={draft()}
           onInput={(event) => setDraft(event.currentTarget.value ?? "")}
+          onKeyDown={(event) => {
+            // Send message on Enter (but allow Shift+Enter for newline)
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              event.stopPropagation(); // Prevent replay controls from triggering
+              if (draft().trim().length > 0 && !props.isBusy) {
+                void handleSubmit(event);
+              }
+            }
+          }}
           placeholder={props.placeholder ?? "Type your response..."}
           rows={3}
           class="w-full rounded border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slippi-400 focus:outline-none focus:ring-2 focus:ring-slippi-300"
