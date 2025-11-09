@@ -1,10 +1,13 @@
 import { createOptions, Select } from "@thisbeyond/solid-select";
-import { createMemo, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import { characterNameByExternalId, stageNameByExternalId } from "~/common/ids";
 import { Picker } from "~/components/common/Picker";
 import { StageBadge } from "~/components/common/Badge";
+import { WhiteButton } from "~/components/common/Button";
 import { ReplayStub, SelectionStore } from "~/state/selectionStore";
-import { reviewNotes } from "~/state/reviewNotesStore";
+import { reviewNotes, getReviewNoteById, saveReviewNote, deleteReviewNote, createReviewNote } from "~/state/reviewNotesStore";
+import { ReviewNotesSection } from "~/components/panels/ReviewNotesSection";
+import { ReviewNote } from "~/common/indexedDB";
 
 const filterProps = createOptions(
   [
@@ -20,6 +23,47 @@ const filterProps = createOptions(
   }
 );
 export function Replays(props: { selectionStore: SelectionStore }) {
+  const [expandedReplayId, setExpandedReplayId] = createSignal<string | null>(null);
+  
+  const selectedStub = () => props.selectionStore.data.selectedFileAndStub?.[1];
+  const selectedReviewNote = createMemo(() => {
+    const stub = selectedStub();
+    if (!stub) return undefined;
+    return getReviewNoteById(stub.fileName);
+  });
+
+  const handleCreateReview = async () => {
+    const stub = selectedStub();
+    if (!stub) return;
+
+    const playerSettings = stub.playerSettings.filter(Boolean);
+    if (playerSettings.length < 2) return;
+
+    const note = createReviewNote(
+      stub.fileName,
+      stub.fileName,
+      playerSettings[0].externalCharacterId,
+      playerSettings[1].externalCharacterId,
+      stub.stageId,
+      stub.playedOn,
+      false
+    );
+
+    await saveReviewNote(note);
+    setExpandedReplayId(stub.fileName);
+  };
+
+  const handleSaveReview = async (note: ReviewNote) => {
+    await saveReviewNote(note);
+  };
+
+  const handleDeleteReview = async () => {
+    const stub = selectedStub();
+    if (!stub) return;
+    await deleteReviewNote(stub.fileName);
+    setExpandedReplayId(null);
+  };
+
   return (
     <>
       <div class="flex max-h-96 w-full flex-col items-center gap-2 overflow-y-auto sm:h-full md:max-h-screen">
@@ -38,6 +82,27 @@ export function Replays(props: { selectionStore: SelectionStore }) {
             onChange={props.selectionStore.setFilters}
           />
         </div>
+        
+        {/* Selected replay review section */}
+        <Show when={selectedStub()}>
+          <div class="w-full border-b border-slate-300 pb-2">
+            <Show when={selectedReviewNote()}>
+              <ReviewNotesSection
+                note={selectedReviewNote()!}
+                onSave={handleSaveReview}
+                onDelete={handleDeleteReview}
+              />
+            </Show>
+            <Show when={!selectedReviewNote()}>
+              <div class="flex justify-center p-2">
+                <WhiteButton onClick={handleCreateReview}>
+                  Add Review Notes
+                </WhiteButton>
+              </div>
+            </Show>
+          </div>
+        </Show>
+
         <Show
           when={props.selectionStore.data.filteredStubs.length > 0}
           fallback={<div>No matching results</div>}
