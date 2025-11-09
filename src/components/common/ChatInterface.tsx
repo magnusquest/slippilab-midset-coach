@@ -1,6 +1,7 @@
 import { For, Show, createSignal, createMemo } from "solid-js";
 import type { JSX } from "solid-js";
 import { SecondaryButton } from "~/components/common/Button";
+import { MarkdownRenderer } from "~/components/common/MarkdownRenderer";
 import type { ChatMessage } from "~/state/aiStore";
 
 interface ChatInterfaceProps {
@@ -58,7 +59,10 @@ export function ChatInterface(props: ChatInterfaceProps) {
                 <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {message.role === "assistant" ? "Coach" : "You"}
                 </div>
-                <div class="whitespace-pre-line">{message.content}</div>
+                <MarkdownRenderer
+                  content={message.content}
+                  class="whitespace-pre-line"
+                />
               </div>
             )}
           </For>
