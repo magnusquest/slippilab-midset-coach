@@ -46,14 +46,15 @@ export function PreGameChat() {
       <div class="flex flex-col gap-1">
         <h3 class="text-base font-semibold text-slate-800">Pre-Game Coach</h3>
         <p class="text-sm text-slate-600">
-          You are preparing for <span class="font-medium">{matchupLabel()}</span>.
-          Use this space to align on gameplan, mental cues, and adaptations.
+          You are preparing for{" "}
+          <span class="font-medium">{matchupLabel()}</span>. Use this space to
+          align on gameplan, mental cues, and adaptations.
         </p>
       </div>
       <Show when={loadedContext().length === 0}>
         <div class="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          No prior review notes found for this matchup. Play a few games and
-          add notes to build richer coaching context.
+          No prior review notes found for this matchup. Play a few games and add
+          notes to build richer coaching context.
         </div>
       </Show>
       <ChatInterface

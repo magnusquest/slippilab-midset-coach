@@ -50,7 +50,9 @@ export function Replays(props: { selectionStore: SelectionStore }) {
               reviewNote={notes().get(stub.fileName)}
             />
           )}
-          onClick={(fileAndSettings) => props.selectionStore.select(fileAndSettings)}
+          onClick={(fileAndSettings) =>
+            props.selectionStore.select(fileAndSettings)
+          }
           selected={(stub) =>
             props.selectionStore.data.selectedFileAndStub?.[1] === stub
           }

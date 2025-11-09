@@ -21,7 +21,10 @@ const STORES: StoreDefinition[] = [
     indexes: [
       { name: "replayFileName", keyPath: "replayFileName" },
       { name: "playerCharacter", keyPath: "replayMetadata.playerCharacter" },
-      { name: "opponentCharacter", keyPath: "replayMetadata.opponentCharacter" },
+      {
+        name: "opponentCharacter",
+        keyPath: "replayMetadata.opponentCharacter",
+      },
       { name: "date", keyPath: "replayMetadata.date" },
       {
         name: "matchupDate",
@@ -75,10 +78,7 @@ function openDatabase(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-export async function putRecord<T>(
-  storeName: string,
-  value: T
-): Promise<void> {
+export async function putRecord<T>(storeName: string, value: T): Promise<void> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, "readwrite");
@@ -100,7 +100,9 @@ export async function deleteRecord(
     const tx = db.transaction(storeName, "readwrite");
     tx.oncomplete = () => resolve();
     tx.onerror = () =>
-      reject(tx.error ?? new Error(`Failed to delete record from ${storeName}`));
+      reject(
+        tx.error ?? new Error(`Failed to delete record from ${storeName}`)
+      );
     tx.onabort = () =>
       reject(tx.error ?? new Error(`Transaction aborted for ${storeName}`));
     tx.objectStore(storeName).delete(key);

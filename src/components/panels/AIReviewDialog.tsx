@@ -1,16 +1,16 @@
 import { For, Show, createMemo, createSignal, onMount } from "solid-js";
 import type { JSX } from "solid-js";
-import { PrimaryButton, SecondaryButton, WhiteButton } from "~/components/common/Button";
+import {
+  PrimaryButton,
+  SecondaryButton,
+  WhiteButton,
+} from "~/components/common/Button";
 import { characterNameByExternalId, stageNameByExternalId } from "~/common/ids";
 import { Dialog } from "~/components/common/Dialog";
 import { ChatInterface } from "~/components/common/ChatInterface";
 import type { ReplayStub } from "~/state/selectionStore";
 import type { ReviewNote } from "~/state/reviewNotesStore";
-import {
-  ChatMessage,
-  apiKey,
-  sendChatMessage,
-} from "~/state/aiStore";
+import { ChatMessage, apiKey, sendChatMessage } from "~/state/aiStore";
 
 interface AIReviewDialogProps {
   replayStub: ReplayStub;
@@ -100,12 +100,9 @@ function AIReviewDialogContent(props: {
 
   const matchupContext = createMemo(() => {
     const players = props.replayStub.playerSettings.filter(Boolean);
-    const player =
-      players.find((p) => p.playerIndex === 0) ?? players.at(0);
-    const opponent =
-      players.find((p) => p.playerIndex === 1) ?? players.at(1);
-    const playerName =
-      player?.displayName || player?.connectCode || "Player 1";
+    const player = players.find((p) => p.playerIndex === 0) ?? players.at(0);
+    const opponent = players.find((p) => p.playerIndex === 1) ?? players.at(1);
+    const playerName = player?.displayName || player?.connectCode || "Player 1";
     const opponentName =
       opponent?.displayName || opponent?.connectCode || "Player 2";
     const playerCharacter =
@@ -171,10 +168,7 @@ function AIReviewDialogContent(props: {
     const userMessage: ChatMessage = { role: "user", content: message };
     setChatHistory((prev) => [...prev, userMessage]);
     try {
-      const response = await sendChatMessage([
-        ...chatHistory(),
-        userMessage,
-      ]);
+      const response = await sendChatMessage([...chatHistory(), userMessage]);
       setChatHistory((prev) => [
         ...prev,
         { role: "assistant", content: response },
@@ -264,9 +258,7 @@ function AIReviewDialogContent(props: {
             Step {currentStep() + 1} of {REVIEW_FIELDS.length} ·{" "}
             {REVIEW_FIELDS[currentStep()].label}
           </div>
-          <div class="text-xs text-slate-500">
-            {matchupContext()}
-          </div>
+          <div class="text-xs text-slate-500">{matchupContext()}</div>
         </div>
         <ChatInterface
           messages={chatHistory()}

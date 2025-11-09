@@ -138,8 +138,7 @@ export function getMatchupReviews(
       note.replayMetadata.opponentCharacter === char2
   );
   notes.sort(
-    (a, b) =>
-      b.replayMetadata.date.getTime() - a.replayMetadata.date.getTime()
+    (a, b) => b.replayMetadata.date.getTime() - a.replayMetadata.date.getTime()
   );
   return notes.slice(0, limit);
 }

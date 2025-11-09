@@ -1,9 +1,4 @@
-import {
-  Show,
-  createEffect,
-  createMemo,
-  createSignal,
-} from "solid-js";
+import { Show, createEffect, createMemo, createSignal } from "solid-js";
 import type { JSX } from "solid-js";
 import {
   PrimaryButton,
@@ -81,9 +76,7 @@ export function ReviewNotesSection(props: { selectionStore: SelectionStore }) {
         keyLearnings: draft().keyLearnings.trim(),
         matchupNotes: draft().matchupNotes.trim(),
       };
-      if (
-        Object.values(sanitized).every((value) => value.length === 0)
-      ) {
+      if (Object.values(sanitized).every((value) => value.length === 0)) {
         setError("Add at least one note before saving your review.");
         setIsSaving(false);
         return;
@@ -135,9 +128,7 @@ export function ReviewNotesSection(props: { selectionStore: SelectionStore }) {
       });
       setIsEditing(false);
     } catch (err) {
-      setError(
-        (err as Error).message ?? "Failed to delete review note."
-      );
+      setError((err as Error).message ?? "Failed to delete review note.");
     }
   }
 
@@ -162,7 +153,11 @@ export function ReviewNotesSection(props: { selectionStore: SelectionStore }) {
       <Show
         when={selectedStub()}
         keyed
-        fallback={<div class="text-sm text-slate-500">Select a replay to add review notes.</div>}
+        fallback={
+          <div class="text-sm text-slate-500">
+            Select a replay to add review notes.
+          </div>
+        }
       >
         {(stub) => (
           <div class="flex flex-col gap-4">
@@ -170,9 +165,7 @@ export function ReviewNotesSection(props: { selectionStore: SelectionStore }) {
               <h2 class="text-base font-semibold text-slate-800">
                 Review Notes
               </h2>
-              <div class="text-sm text-slate-500">
-                {descriptor(stub)}
-              </div>
+              <div class="text-sm text-slate-500">{descriptor(stub)}</div>
             </header>
             <Show when={error()}>
               <div class="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
@@ -198,9 +191,7 @@ export function ReviewNotesSection(props: { selectionStore: SelectionStore }) {
                         await handleSave(isAiGenerated);
                       }}
                     >
-                      <SecondaryButton type="button">
-                        AI Review
-                      </SecondaryButton>
+                      <SecondaryButton type="button">AI Review</SecondaryButton>
                     </AIReviewDialog>
                   }
                 />
@@ -232,9 +223,11 @@ function descriptor(stub: ReplayStub) {
   const opponent =
     players.find((player) => player.playerIndex === 1) ?? players.at(1);
   const playerCharacter =
-    (primary && characterNameByExternalId[primary.externalCharacterId]) ?? "Unknown";
+    (primary && characterNameByExternalId[primary.externalCharacterId]) ??
+    "Unknown";
   const opponentCharacter =
-    (opponent && characterNameByExternalId[opponent.externalCharacterId]) ?? "Unknown";
+    (opponent && characterNameByExternalId[opponent.externalCharacterId]) ??
+    "Unknown";
   const stageName = stageNameByExternalId[stub.stageId] ?? "Unknown Stage";
   const playedDate = new Date(stub.playedOn).toLocaleString();
   return `${playerCharacter} vs ${opponentCharacter} · ${stageName} · ${playedDate}`;
@@ -252,7 +245,11 @@ function ReadOnlyView(props: {
       <div class="flex flex-col gap-4 rounded border border-slate-200 bg-slate-50 p-4">
         <Show
           when={props.isPromptActive}
-          fallback={<div class="text-sm text-slate-600">No notes yet. Start a manual review or let the AI guide you.</div>}
+          fallback={
+            <div class="text-sm text-slate-600">
+              No notes yet. Start a manual review or let the AI guide you.
+            </div>
+          }
         >
           <div class="text-sm font-medium text-slate-700">
             Would you like to review this game?
@@ -271,14 +268,28 @@ function ReadOnlyView(props: {
   return (
     <div class="flex flex-col gap-4">
       <div class="grid gap-3 rounded border border-slate-200 bg-slate-50 p-4">
-        <ReviewField label="What Went Well" value={props.note.review.whatWentWell} />
-        <ReviewField label="What Went Wrong" value={props.note.review.whatWentWrong} />
-        <ReviewField label="Key Learnings" value={props.note.review.keyLearnings} />
-        <ReviewField label="Matchup Notes" value={props.note.review.matchupNotes} />
+        <ReviewField
+          label="What Went Well"
+          value={props.note.review.whatWentWell}
+        />
+        <ReviewField
+          label="What Went Wrong"
+          value={props.note.review.whatWentWrong}
+        />
+        <ReviewField
+          label="Key Learnings"
+          value={props.note.review.keyLearnings}
+        />
+        <ReviewField
+          label="Matchup Notes"
+          value={props.note.review.matchupNotes}
+        />
       </div>
       <div class="flex items-center justify-between text-xs text-slate-500">
         <div>
-          {props.note.isAiGenerated ? "Generated with AI assistance" : "Manual note"}
+          {props.note.isAiGenerated
+            ? "Generated with AI assistance"
+            : "Manual note"}
         </div>
         <div>Updated {props.note.updatedAt.toLocaleString()}</div>
       </div>
@@ -389,6 +400,8 @@ function getCharacterId(stub: ReplayStub, playerIndex: number): number {
   const players = getPlayers(stub);
   return (
     players.find((player) => player.playerIndex === playerIndex)
-      ?.externalCharacterId ?? players.at(playerIndex)?.externalCharacterId ?? -1
+      ?.externalCharacterId ??
+    players.at(playerIndex)?.externalCharacterId ??
+    -1
   );
 }

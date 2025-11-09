@@ -1,8 +1,5 @@
 import { For } from "solid-js";
-import {
-  characterNameByExternalId,
-  ExternalCharacterName,
-} from "~/common/ids";
+import { characterNameByExternalId, ExternalCharacterName } from "~/common/ids";
 import { matchup, setMatchup } from "~/state/coachStore";
 
 export function MatchupSelector() {
@@ -55,9 +52,7 @@ function CharacterOptions(props: {
 }) {
   return (
     <For each={props.characters}>
-      {(character) => (
-        <option value={character.id}>{character.name}</option>
-      )}
+      {(character) => <option value={character.id}>{character.name}</option>}
     </For>
   );
 }
