@@ -1,6 +1,7 @@
 import { For, Show, createSignal, createMemo } from "solid-js";
 import type { JSX } from "solid-js";
 import { SecondaryButton } from "~/components/common/Button";
+import { MarkdownRenderer } from "~/components/common/MarkdownRenderer";
 import type { ChatMessage } from "~/state/aiStore";
 
 interface ChatInterfaceProps {
@@ -58,7 +59,10 @@ export function ChatInterface(props: ChatInterfaceProps) {
                 <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {message.role === "assistant" ? "Coach" : "You"}
                 </div>
-                <div class="whitespace-pre-line">{message.content}</div>
+                <MarkdownRenderer
+                  content={message.content}
+                  class="whitespace-pre-line"
+                />
               </div>
             )}
           </For>
@@ -68,6 +72,16 @@ export function ChatInterface(props: ChatInterfaceProps) {
         <textarea
           value={draft()}
           onInput={(event) => setDraft(event.currentTarget.value ?? "")}
+          onKeyDown={(event) => {
+            // Send message on Enter (but allow Shift+Enter for newline)
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              event.stopPropagation(); // Prevent replay controls from triggering
+              if (draft().trim().length > 0 && !props.isBusy) {
+                void handleSubmit(event);
+              }
+            }
+          }}
           placeholder={props.placeholder ?? "Type your response..."}
           rows={3}
           class="w-full rounded border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slippi-400 focus:outline-none focus:ring-2 focus:ring-slippi-300"

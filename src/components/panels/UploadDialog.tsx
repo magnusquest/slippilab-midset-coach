@@ -96,25 +96,27 @@ export function UploadDialog() {
                 </Match>
               </Switch>
             </div>
-            <div class="flex w-full justify-end gap-2">
-              <Switch>
-                <Match when={state() === "not started"}>
-                  <Dialog.Close>
-                    <WhiteButton>Cancel</WhiteButton>
-                  </Dialog.Close>
-                  <PrimaryButton onClick={onUploadClicked}>
-                    Upload
-                  </PrimaryButton>
-                </Match>
-                <Match when={state() === "done" || state() === "copied"}>
-                  <Dialog.Close>
-                    <WhiteButton>Close</WhiteButton>
-                  </Dialog.Close>
-                </Match>
-              </Switch>
-            </div>
           </div>
         </Dialog.Contents>
+        <Dialog.Footer>
+          <div class="flex w-full justify-end gap-2">
+            <Switch>
+              <Match when={state() === "not started"}>
+                <Dialog.Close>
+                  <WhiteButton>Cancel</WhiteButton>
+                </Dialog.Close>
+                <PrimaryButton onClick={onUploadClicked}>
+                  Upload
+                </PrimaryButton>
+              </Match>
+              <Match when={state() === "done" || state() === "copied"}>
+                <Dialog.Close>
+                  <WhiteButton>Close</WhiteButton>
+                </Dialog.Close>
+              </Match>
+            </Switch>
+          </div>
+        </Dialog.Footer>
       </Dialog>
     </div>
   );

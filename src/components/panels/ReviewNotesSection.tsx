@@ -5,6 +5,7 @@ import {
   SecondaryButton,
   WhiteButton,
 } from "~/components/common/Button";
+import { MarkdownRenderer } from "~/components/common/MarkdownRenderer";
 import type { SelectionStore, ReplayStub } from "~/state/selectionStore";
 import {
   ReviewNote,
@@ -363,9 +364,19 @@ function ReviewField(props: { label: string; value: string }) {
   return (
     <div class="flex flex-col gap-1">
       <div class="text-sm font-semibold text-slate-700">{props.label}</div>
-      <div class="whitespace-pre-line rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-        {props.value.length > 0 ? props.value : "—"}
-      </div>
+      <Show
+        when={props.value.length > 0}
+        fallback={
+          <div class="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+            —
+          </div>
+        }
+      >
+        <MarkdownRenderer
+          content={props.value}
+          class="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+        />
+      </Show>
     </div>
   );
 }

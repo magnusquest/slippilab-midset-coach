@@ -78,7 +78,7 @@ This route is for when the user wants you to handle an entire issue from start t
   1. Confirm the GitHub Issue number.
   2. Check the issue for completeness. If it's incomplete, **revert to Option 2** to define the plan.
   3. Prepare a new feature branch and git worktree using the `using-git-worktrees` skill.
-  4. Make a copy of the GitHub Issue's plan into a local file within the worktree (e.g., `docs/plans/[ISSUE_ID]-plan.md`).
+  4. Make a copy of the GitHub Issue's plan into a local file within the worktree (e.g., `docs/tasks/[ISSUE_ID].md`).
   5. **Dispatch a fresh sub-agent** by formatting and invoking the following tool call for _each task_ in the plan in parallel if possible:
 
 ```xml

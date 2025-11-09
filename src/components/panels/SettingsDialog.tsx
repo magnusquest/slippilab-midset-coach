@@ -1,4 +1,4 @@
-import { createEffect, createSignal, Show } from "solid-js";
+import { createEffect, createSignal, Show, Accessor } from "solid-js";
 import { PrimaryButton, WhiteButton } from "~/components/common/Button";
 import { Dialog } from "~/components/common/Dialog";
 import { KeyboardIcon } from "~/components/common/icons";
@@ -13,6 +13,11 @@ import {
 } from "~/state/aiStore";
 
 export function SettingsDialog() {
+  const [status, setStatus] = createSignal<
+    "idle" | "validating" | "success" | "error"
+  >("idle");
+  const [statusMessage, setStatusMessage] = createSignal<string>("");
+
   return (
     <div class="h-8 w-8">
       <Dialog>
@@ -25,21 +30,39 @@ export function SettingsDialog() {
           <div class="text-lg font-semibold">Settings</div>
         </Dialog.Title>
         <Dialog.Contents>
-          <Settings />
+          <Settings
+            status={status}
+            setStatus={setStatus}
+            statusMessage={statusMessage}
+            setStatusMessage={setStatusMessage}
+          />
         </Dialog.Contents>
+        <Dialog.Footer>
+          <SettingsFooter status={status} />
+        </Dialog.Footer>
       </Dialog>
     </div>
   );
 }
 
-function Settings() {
+function Settings(props: {
+  status: Accessor<"idle" | "validating" | "success" | "error">;
+  setStatus: (
+    status:
+      | "idle"
+      | "validating"
+      | "success"
+      | "error"
+      | ((
+          prev: "idle" | "validating" | "success" | "error"
+        ) => "idle" | "validating" | "success" | "error")
+  ) => void;
+  statusMessage: Accessor<string>;
+  setStatusMessage: (message: string | ((prev: string) => string)) => void;
+}) {
   const [formApiKey, setFormApiKey] = createSignal(apiKey());
   const [formModel, setFormModel] = createSignal(preferredModel());
   const [formVoice, setFormVoice] = createSignal(preferredVoice());
-  const [status, setStatus] = createSignal<
-    "idle" | "validating" | "success" | "error"
-  >("idle");
-  const [statusMessage, setStatusMessage] = createSignal<string>("");
 
   createEffect(() => setFormApiKey(apiKey()));
   createEffect(() => setFormModel(preferredModel()));
@@ -59,12 +82,12 @@ function Settings() {
     event.preventDefault();
     const trimmedKey = formApiKey().trim();
     if (trimmedKey.length > 0) {
-      setStatus("validating");
-      setStatusMessage("Validating API key…");
+      props.setStatus("validating");
+      props.setStatusMessage("Validating API key…");
       const isValid = await validateApiKey(trimmedKey);
       if (!isValid) {
-        setStatus("error");
-        setStatusMessage(
+        props.setStatus("error");
+        props.setStatusMessage(
           "Invalid API key. Please double-check your key and try again."
         );
         return;
@@ -74,8 +97,8 @@ function Settings() {
     setApiKey(trimmedKey);
     setPreferredModel(formModel());
     setPreferredVoice(formVoice());
-    setStatus("success");
-    setStatusMessage(
+    props.setStatus("success");
+    props.setStatusMessage(
       trimmedKey.length > 0
         ? "API key validated and saved."
         : "Preferences saved. AI features remain disabled without an API key."
@@ -83,7 +106,7 @@ function Settings() {
   }
 
   return (
-    <form onSubmit={handleSave} class="flex flex-col gap-6">
+    <form id="settings-form" onSubmit={handleSave} class="flex flex-col gap-6">
       <section class="flex flex-col gap-3">
         <div>
           <h2 class="text-base font-semibold text-slate-800">AI Settings</h2>
@@ -129,16 +152,16 @@ function Settings() {
             </select>
           </label>
         </div>
-        <Show when={status() !== "idle"}>
+        <Show when={props.status() !== "idle"}>
           <div
             classList={{
               "text-sm font-medium": true,
-              "text-slate-600": status() === "validating",
-              "text-green-600": status() === "success",
-              "text-red-600": status() === "error",
+              "text-slate-600": props.status() === "validating",
+              "text-green-600": props.status() === "success",
+              "text-red-600": props.status() === "error",
             }}
           >
-            {statusMessage()}
+            {props.statusMessage()}
           </div>
         </Show>
       </section>
@@ -335,18 +358,26 @@ function Settings() {
           </table>
         </div>
       </section>
-      <div class="flex w-full justify-end gap-3 border-t border-slate-200 pt-4">
-        <Dialog.Close>
-          <WhiteButton type="button">Close</WhiteButton>
-        </Dialog.Close>
-        <PrimaryButton
-          type="submit"
-          class="disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={status() === "validating"}
-        >
-          {status() === "validating" ? "Saving…" : "Save"}
-        </PrimaryButton>
-      </div>
     </form>
+  );
+}
+
+function SettingsFooter(props: {
+  status: Accessor<"idle" | "validating" | "success" | "error">;
+}) {
+  return (
+    <div class="flex w-full justify-end gap-3">
+      <Dialog.Close>
+        <WhiteButton type="button">Close</WhiteButton>
+      </Dialog.Close>
+      <PrimaryButton
+        type="submit"
+        form="settings-form"
+        class="disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={props.status() === "validating"}
+      >
+        {props.status() === "validating" ? "Saving…" : "Save"}
+      </PrimaryButton>
+    </div>
   );
 }

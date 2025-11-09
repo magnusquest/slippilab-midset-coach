@@ -3,8 +3,4 @@ dist
 .env
 .dev.vars
 .wrangler
-package-lock.json
-.worktrees/
-
-# ai workflow files
 .worktrees/

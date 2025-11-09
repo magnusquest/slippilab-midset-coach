@@ -1,0 +1,148 @@
+#!/bin/bash
+
+# Cursor command: /clean-workspace
+# This script helps clean up git worktrees and branches with user confirmation at each step
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to prompt user for confirmation
+confirm() {
+    echo -e "${YELLOW}$1${NC}"
+    read -p "Continue? (y/n): " choice
+    case "$choice" in
+        y|Y|yes|YES ) return 0;;
+        * ) return 1;;
+    esac
+}
+
+echo -e "${GREEN}=== Git Workspace Cleanup ===${NC}\n"
+
+# Step 1: Check for local worktrees and remove all but 'main' or 'master'
+echo -e "${GREEN}Step 1: Checking for git worktrees...${NC}"
+worktrees=$(git worktree list --porcelain 2>/dev/null || echo "")
+
+if [ -z "$worktrees" ]; then
+    echo "No worktrees found. Skipping step 1."
+else
+    # Parse worktrees to find branches
+    worktree_branches=()
+    current_path=""
+    current_branch=""
+    
+    while IFS= read -r line; do
+        if [[ $line == worktree* ]]; then
+            current_path=$(echo "$line" | cut -d' ' -f2-)
+        elif [[ $line == branch* ]]; then
+            current_branch=$(echo "$line" | cut -d' ' -f2- | sed 's|refs/heads/||')
+            if [[ "$current_branch" != "main" && "$current_branch" != "master" ]]; then
+                worktree_branches+=("$current_path|$current_branch")
+            fi
+        fi
+    done <<< "$worktrees"
+    
+    if [ ${#worktree_branches[@]} -eq 0 ]; then
+        echo "No worktrees to remove (only main/master worktrees found)."
+    else
+        echo -e "\nFound worktrees to potentially remove:"
+        for item in "${worktree_branches[@]}"; do
+            path=$(echo "$item" | cut -d'|' -f1)
+            branch=$(echo "$item" | cut -d'|' -f2)
+            echo "  - $path (branch: $branch)"
+        done
+        
+        if confirm "\nDo you want to remove these worktrees? (This will keep only main/master worktrees)"; then
+            for item in "${worktree_branches[@]}"; do
+                path=$(echo "$item" | cut -d'|' -f1)
+                branch=$(echo "$item" | cut -d'|' -f2)
+                echo "Removing worktree: $path (branch: $branch)"
+                git worktree remove "$path" 2>/dev/null || git worktree remove --force "$path"
+            done
+            echo -e "${GREEN}Worktrees removed successfully.${NC}"
+        else
+            echo "Skipping worktree removal."
+        fi
+    fi
+fi
+
+echo ""
+
+# Step 2: Check for local branches tracking remote branches that are gone
+echo -e "${GREEN}Step 2: Checking for local branches tracking deleted remote branches...${NC}"
+
+# First, fetch and prune to update remote tracking info
+echo "Fetching latest remote information..."
+git fetch --prune --quiet 2>/dev/null || git fetch --prune
+
+# Find local branches that track remote branches that are gone
+gone_branches=$(git branch -vv | grep ': gone]' | awk '{print $1}' || echo "")
+
+if [ -z "$gone_branches" ]; then
+    echo "No local branches tracking deleted remote branches found."
+else
+    echo -e "\nFound local branches tracking deleted remote branches:"
+    echo "$gone_branches" | while read -r branch; do
+        echo "  - $branch"
+    done
+    
+    if confirm "\nDo you want to remove these local branches? (They track remote branches that no longer exist)"; then
+        echo "$gone_branches" | while read -r branch; do
+            echo "Removing local branch: $branch"
+            git branch -d "$branch" 2>/dev/null || git branch -D "$branch" 2>/dev/null || echo "  Could not remove $branch (may have unmerged changes)"
+        done
+        echo -e "${GREEN}Local branches cleaned up.${NC}"
+    else
+        echo "Skipping local branch cleanup."
+    fi
+fi
+
+echo ""
+
+# Step 3: Check for remote branches not present locally and remove them
+echo -e "${GREEN}Step 3: Checking for remote branches not present locally...${NC}"
+
+# Get list of remote branches
+remote_branches=$(git branch -r | grep -v HEAD | sed 's|origin/||' | sort -u || echo "")
+local_branches=$(git branch | sed 's/^[* ] //' | sort -u || echo "")
+
+# Find remote branches that don't have local counterparts
+remote_only_branches=()
+while IFS= read -r remote_branch; do
+    if [ -n "$remote_branch" ]; then
+        # Check if this remote branch exists locally
+        if ! echo "$local_branches" | grep -q "^${remote_branch}$"; then
+            # Also exclude main/master from deletion
+            if [[ "$remote_branch" != "main" && "$remote_branch" != "master" ]]; then
+                remote_only_branches+=("$remote_branch")
+            fi
+        fi
+    fi
+done <<< "$remote_branches"
+
+if [ ${#remote_only_branches[@]} -eq 0 ]; then
+    echo "No remote-only branches found (all remote branches have local counterparts or are main/master)."
+else
+    echo -e "\nFound remote branches without local counterparts:"
+    for branch in "${remote_only_branches[@]}"; do
+        echo "  - origin/$branch"
+    done
+    
+    if confirm "\nDo you want to delete these remote branches? (This will permanently delete them from the remote repository)"; then
+        for branch in "${remote_only_branches[@]}"; do
+            echo "Deleting remote branch: origin/$branch"
+            git push origin --delete "$branch" 2>/dev/null || echo "  Could not delete origin/$branch"
+        done
+        echo -e "${GREEN}Remote branches deleted successfully.${NC}"
+    else
+        echo "Skipping remote branch deletion."
+    fi
+fi
+
+echo ""
+echo -e "${GREEN}=== Cleanup Complete ===${NC}"
+
