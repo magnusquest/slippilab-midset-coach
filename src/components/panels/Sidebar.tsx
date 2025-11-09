@@ -3,6 +3,7 @@ import { Switch, Match } from "solid-js";
 import { Replays } from "~/components/panels/Replays";
 import { Clips } from "~/components/panels/Clips";
 import { Inputs } from "~/components/panels/Inputs";
+import { CoachPanel } from "~/components/panels/CoachPanel";
 import { cloudLibrary, localLibrary } from "~/state/selectionStore";
 
 export function Sidebar() {
@@ -21,6 +22,9 @@ export function Sidebar() {
           </Match>
           <Match when={currentSidebar() === "inputs"}>
             <Inputs />
+          </Match>
+          <Match when={currentSidebar() === "coach"}>
+            <CoachPanel />
           </Match>
         </Switch>
       </div>

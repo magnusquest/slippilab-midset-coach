@@ -5,6 +5,7 @@ import {
   GitHubIcon,
   TwitterIcon,
   VideoLibraryIcon,
+  CoachIcon,
 } from "~/components/common/icons";
 import { SettingsDialog } from "~/components/panels/SettingsDialog";
 import { currentSidebar, setSidebar } from "~/state/navigationStore";
@@ -47,6 +48,14 @@ export function Navigation() {
                 "bg-slippi-50": currentSidebar() === "inputs",
               }}
               onClick={() => setSidebar("inputs")}
+            />
+            <CoachIcon
+              title="Coach"
+              classList={{
+                "py-4 cursor-pointer -mx-7 px-7": true,
+                "bg-slippi-50": currentSidebar() === "coach",
+              }}
+              onClick={() => setSidebar("coach")}
             />
           </div>
         </div>
