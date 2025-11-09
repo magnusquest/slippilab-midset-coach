@@ -15,8 +15,12 @@ import "~/state/fileStore";
 import "~/state/replayStore";
 import "~/state/selectionStore";
 import { setSidebar } from "~/state/navigationStore";
+import { loadReviewNotes } from "~/state/reviewNotesStore";
 
 export function App() {
+  // Initialize review notes from IndexedDB
+  void loadReviewNotes();
+
   // Get started fetching the most popular characters
   void fetchAnimations(20); // Falco
   void fetchAnimations(2); // Fox

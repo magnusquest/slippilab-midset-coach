@@ -4,6 +4,7 @@ import { characterNameByExternalId, stageNameByExternalId } from "~/common/ids";
 import { Picker } from "~/components/common/Picker";
 import { StageBadge } from "~/components/common/Badge";
 import { ReplayStub, SelectionStore } from "~/state/selectionStore";
+import { reviewNotes } from "~/state/reviewNotesStore";
 
 const filterProps = createOptions(
   [
@@ -77,6 +78,17 @@ function GameInfo(props: { replayStub: ReplayStub }) {
     return teams.filter((team) => team.length > 0);
   });
 
+  // Check if this replay has a review note
+  const hasReview = createMemo(() => {
+    const notes = reviewNotes();
+    return notes.has(props.replayStub.fileName);
+  });
+
+  const reviewNote = createMemo(() => {
+    const notes = reviewNotes();
+    return notes.get(props.replayStub.fileName);
+  });
+
   return (
     <>
       <div class="flex w-full items-center">
@@ -92,6 +104,16 @@ function GameInfo(props: { replayStub: ReplayStub }) {
               .map(playerString)
               .join(" vs ")
           )}
+        </div>
+        <div class="ml-2 flex gap-1">
+          <Show when={hasReview()}>
+            <span 
+              class="text-sm"
+              title={reviewNote()?.isAiGenerated ? "AI-assisted review" : "Manual review"}
+            >
+              {reviewNote()?.isAiGenerated ? "🤖" : "✓"}
+            </span>
+          </Show>
         </div>
       </div>
     </>
