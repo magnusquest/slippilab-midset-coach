@@ -1,4 +1,4 @@
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createSignal, createMemo } from "solid-js";
 import type { JSX } from "solid-js";
 import { SecondaryButton } from "~/components/common/Button";
 import type { ChatMessage } from "~/state/aiStore";
@@ -14,6 +14,10 @@ interface ChatInterfaceProps {
 export function ChatInterface(props: ChatInterfaceProps) {
   const [draft, setDraft] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
+
+  const filteredMessages = createMemo(() =>
+    props.messages.filter((message) => message.role !== "system")
+  );
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
@@ -33,10 +37,15 @@ export function ChatInterface(props: ChatInterfaceProps) {
   return (
     <div class="flex h-full flex-col gap-3">
       <div class="flex flex-1 flex-col gap-2 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3 text-sm">
-        <Show when={props.messages.filter((message) => message.role !== "system").length > 0} fallback={<div class="text-slate-500">No messages yet. Share your thoughts to begin.</div>}>
-          <For
-            each={props.messages.filter((message) => message.role !== "system")}
-          >
+        <Show
+          when={filteredMessages().length > 0}
+          fallback={
+            <div class="text-slate-500">
+              No messages yet. Share your thoughts to begin.
+            </div>
+          }
+        >
+          <For each={filteredMessages()}>
             {(message) => (
               <div
                 classList={{
@@ -69,7 +78,10 @@ export function ChatInterface(props: ChatInterfaceProps) {
             <Show when={error()}>{error()}</Show>
           </div>
           <div class="flex items-center gap-2">
-            <SecondaryButton type="submit" disabled={props.isBusy || draft().trim().length === 0}>
+            <SecondaryButton
+              type="submit"
+              disabled={props.isBusy || draft().trim().length === 0}
+            >
               {props.isBusy ? "Sending…" : "Send"}
             </SecondaryButton>
           </div>

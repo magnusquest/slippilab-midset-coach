@@ -46,10 +46,7 @@ export function LiveSession() {
     };
 
     const handleClose = () => {
-      setTranscript((entries) => [
-        ...entries,
-        "[Session ended by server]",
-      ]);
+      setTranscript((entries) => [...entries, "[Session ended by server]"]);
       endLiveSession();
     };
 
@@ -139,10 +136,11 @@ export function LiveSession() {
             </div>
           </Show>
           <div class="flex max-h-48 flex-col gap-2 overflow-y-auto rounded border border-slate-200 bg-white p-3 text-sm text-slate-700">
-            <Show when={transcript().length > 0} fallback={<div>No transcript yet.</div>}>
-              <For each={transcript()}>
-                {(line) => <div>{line}</div>}
-              </For>
+            <Show
+              when={transcript().length > 0}
+              fallback={<div>No transcript yet.</div>}
+            >
+              <For each={transcript()}>{(line) => <div>{line}</div>}</For>
             </Show>
           </div>
         </div>

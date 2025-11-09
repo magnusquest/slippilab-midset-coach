@@ -23,9 +23,9 @@ const [matchupSignal, setMatchupSignal] =
   createSignal<Matchup>(DEFAULT_MATCHUP);
 const [contextGameCountSignal, setContextGameCountSignal] =
   createSignal<number>(10);
-const [loadedContextSignal, setLoadedContextSignal] = createSignal<ReviewNote[]>(
-  []
-);
+const [loadedContextSignal, setLoadedContextSignal] = createSignal<
+  ReviewNote[]
+>([]);
 const [chatHistorySignal, setChatHistorySignal] = createSignal<ChatMessage[]>(
   []
 );
@@ -38,7 +38,11 @@ createEffect(() => {
   void reviewNotes();
   const matchup = matchupSignal();
   const contextCount = contextGameCountSignal();
-  const notes = getMatchupReviews(matchup.player, matchup.opponent, contextCount);
+  const notes = getMatchupReviews(
+    matchup.player,
+    matchup.opponent,
+    contextCount
+  );
   setLoadedContextSignal(notes);
 });
 
@@ -92,9 +96,7 @@ export function endLiveSession(): void {
   setIsLiveSessionSignal(false);
 }
 
-export async function sendCoachMessage(
-  userMessage: string
-): Promise<void> {
+export async function sendCoachMessage(userMessage: string): Promise<void> {
   const trimmed = userMessage.trim();
   if (trimmed.length === 0) {
     return;
@@ -115,9 +117,7 @@ export async function sendCoachMessage(
     addChatMessage({ role: "assistant", content: assistantReply });
   } catch (error) {
     // Roll back user message on failure to avoid confusing transcript
-    setChatHistorySignal((prev) =>
-      prev.slice(0, Math.max(0, prev.length - 1))
-    );
+    setChatHistorySignal((prev) => prev.slice(0, Math.max(0, prev.length - 1)));
     throw error instanceof Error
       ? error
       : new Error("Failed to send message to coach.");
@@ -134,26 +134,26 @@ function buildSystemPrompt(matchup: Matchup, context: ReviewNote[]): string {
     context.length === 0
       ? "No prior review notes are available."
       : context
-            .map((note) => {
-              const date = note.replayMetadata.date.toLocaleDateString();
-              const stageName =
-                stageNameByExternalId[note.replayMetadata.stage] ??
-                `Stage ${note.replayMetadata.stage}`;
-              return [
-                `Game (${date}) on ${stageName}:`,
-                note.review.keyLearnings
-                  ? `Key Learnings: ${note.review.keyLearnings}`
-                  : null,
-                note.review.matchupNotes
-                  ? `Matchup Notes: ${note.review.matchupNotes}`
-                  : null,
-                note.review.whatWentWrong
-                  ? `Struggles: ${note.review.whatWentWrong}`
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(" ");
-            })
+          .map((note) => {
+            const date = note.replayMetadata.date.toLocaleDateString();
+            const stageName =
+              stageNameByExternalId[note.replayMetadata.stage] ??
+              `Stage ${note.replayMetadata.stage}`;
+            return [
+              `Game (${date}) on ${stageName}:`,
+              note.review.keyLearnings
+                ? `Key Learnings: ${note.review.keyLearnings}`
+                : null,
+              note.review.matchupNotes
+                ? `Matchup Notes: ${note.review.matchupNotes}`
+                : null,
+              note.review.whatWentWrong
+                ? `Struggles: ${note.review.whatWentWrong}`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" ");
+          })
           .join("\n---\n");
 
   return [
