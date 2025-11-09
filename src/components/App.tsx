@@ -1,7 +1,7 @@
 /* @refresh reload */
 import { createDropzone } from "@solid-primitives/upload";
 import "@thisbeyond/solid-select/style.css";
-import { Show } from "solid-js";
+import { Show, onMount } from "solid-js";
 import { filterFiles } from "~/common/util";
 import { ToastGroup } from "~/components/common/toaster";
 import { Navigation } from "~/components/panels/Navigation";
@@ -10,6 +10,7 @@ import { TopBar } from "~/components/panels/TopBar";
 import { Viewer } from "~/components/viewer/Viewer";
 import { load } from "~/state/fileStore";
 import { replayStore } from "~/state/replayStore";
+import { loadReviewNotes } from "~/state/reviewNotesStore";
 import { fetchAnimations } from "~/viewer/animationCache";
 import "~/state/fileStore";
 import "~/state/replayStore";
@@ -17,6 +18,9 @@ import "~/state/selectionStore";
 import { setSidebar } from "~/state/navigationStore";
 
 export function App() {
+  onMount(() => {
+    void loadReviewNotes();
+  });
   // Get started fetching the most popular characters
   void fetchAnimations(20); // Falco
   void fetchAnimations(2); // Fox
