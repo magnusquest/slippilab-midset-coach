@@ -17,6 +17,7 @@ interface DialogParts {
   trigger?: JSX.Element;
   title?: JSX.Element;
   contents?: JSX.Element;
+  footer?: JSX.Element;
 }
 const DialogPartsContext = createContext<DialogParts>();
 
@@ -45,14 +46,28 @@ function Base(props: { onClose?: () => void; children: JSX.Element }) {
           >
             <div
               {...api().contentProps}
-              class="w-full max-w-xl rounded-md border border-slate-300 bg-white p-8"
+              class="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-md border border-slate-300 bg-white"
             >
-              <div {...api().titleProps} class="w-full">
-                <Show when={parts.title}>{parts.title}</Show>
+              {/* Sticky Header */}
+              <div class="flex-shrink-0 border-b border-slate-200 px-8 pt-8 pb-4">
+                <div {...api().titleProps} class="w-full">
+                  <Show when={parts.title}>{parts.title}</Show>
+                </div>
               </div>
-              <div {...api().descriptionProps} class="w-full">
-                <Show when={parts.contents}>{parts.contents}</Show>
+
+              {/* Scrollable Content */}
+              <div class="flex-1 overflow-y-auto px-8 py-4">
+                <div {...api().descriptionProps} class="w-full">
+                  <Show when={parts.contents}>{parts.contents}</Show>
+                </div>
               </div>
+
+              {/* Sticky Footer (if present) */}
+              <Show when={parts.footer}>
+                <div class="flex-shrink-0 border-t border-slate-200 px-8 pb-8 pt-4">
+                  {parts.footer}
+                </div>
+              </Show>
             </div>
           </div>
         </Portal>
@@ -90,6 +105,16 @@ function Contents(props: { children: JSX.Element }) {
   return null;
 }
 
+function Footer(props: { children: JSX.Element }) {
+  const parts = useContext(DialogPartsContext);
+  if (!parts) {
+    throw new Error("<Dialog.Footer> used outside <Dialog>");
+  }
+
+  parts.footer = props.children;
+  return null;
+}
+
 function Close(props: { children: JSX.Element }) {
   const parts = useContext(DialogPartsContext);
   if (!parts) {
@@ -111,6 +136,7 @@ export const Dialog = Object.assign(Base, {
   Trigger,
   Title,
   Contents,
+  Footer,
   Close,
   useDialogApi,
 });

@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal, onMount } from "solid-js";
+import { For, Show, createMemo, createSignal, onMount, Accessor, createEffect } from "solid-js";
 import type { JSX } from "solid-js";
 import {
   PrimaryButton,
@@ -56,32 +56,6 @@ const REVIEW_FIELDS: FieldDefinition[] = [
 ];
 
 export function AIReviewDialog(props: AIReviewDialogProps) {
-  return (
-    <Dialog>
-      <Dialog.Trigger>{props.children}</Dialog.Trigger>
-      <Dialog.Title>
-        <div class="text-lg font-semibold">AI Socratic Review</div>
-      </Dialog.Title>
-      <Dialog.Contents>
-        <AIReviewDialogContent
-          replayStub={props.replayStub}
-          existingNote={props.existingNote}
-          onComplete={props.onComplete}
-        />
-      </Dialog.Contents>
-    </Dialog>
-  );
-}
-
-function AIReviewDialogContent(props: {
-  replayStub: ReplayStub;
-  existingNote?: ReviewNote;
-  onComplete: (result: {
-    review: ReviewNote["review"];
-    isAiGenerated: boolean;
-  }) => Promise<void> | void;
-}) {
-  const dialogApi = Dialog.useDialogApi();
   const [currentStep, setCurrentStep] = createSignal(0);
   const [chatHistory, setChatHistory] = createSignal<ChatMessage[]>([]);
   const [draftReview, setDraftReview] = createSignal<ReviewNote["review"]>({
@@ -95,6 +69,66 @@ function AIReviewDialogContent(props: {
     props.existingNote?.isAiGenerated ?? false
   );
   const [error, setError] = createSignal<string | null>(null);
+
+  return (
+    <Dialog>
+      <Dialog.Trigger>{props.children}</Dialog.Trigger>
+      <Dialog.Title>
+        <div class="text-lg font-semibold">AI Socratic Review</div>
+      </Dialog.Title>
+      <Dialog.Contents>
+        <AIReviewDialogContent
+          replayStub={props.replayStub}
+          existingNote={props.existingNote}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          chatHistory={chatHistory}
+          setChatHistory={setChatHistory}
+          draftReview={draftReview}
+          setDraftReview={setDraftReview}
+          isBusy={isBusy}
+          setIsBusy={setIsBusy}
+          hasUsedAi={hasUsedAi}
+          setHasUsedAi={setHasUsedAi}
+          error={error}
+          setError={setError}
+        />
+      </Dialog.Contents>
+      <Dialog.Footer>
+        <AIReviewDialogFooter
+          currentStep={currentStep}
+          draftReview={draftReview}
+          isBusy={isBusy}
+          setIsBusy={setIsBusy}
+          hasUsedAi={hasUsedAi}
+          onComplete={props.onComplete}
+          onStepChange={(step) => {
+            setCurrentStep(step);
+            // prepareStep will be called by content component watching step changes
+          }}
+        />
+      </Dialog.Footer>
+    </Dialog>
+  );
+}
+
+function AIReviewDialogContent(props: {
+  replayStub: ReplayStub;
+  existingNote?: ReviewNote;
+  currentStep: Accessor<number>;
+  setCurrentStep: (step: number | ((prev: number) => number)) => void;
+  chatHistory: Accessor<ChatMessage[]>;
+  setChatHistory: (history: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => void;
+  draftReview: Accessor<ReviewNote["review"]>;
+  setDraftReview: (review: ReviewNote["review"] | ((prev: ReviewNote["review"]) => ReviewNote["review"])) => void;
+  isBusy: Accessor<boolean>;
+  setIsBusy: (busy: boolean | ((prev: boolean) => boolean)) => void;
+  hasUsedAi: Accessor<boolean>;
+  setHasUsedAi: (used: boolean | ((prev: boolean) => boolean)) => void;
+  error: Accessor<string | null>;
+  setError: (error: string | null | ((prev: string | null) => string | null)) => void;
+}) {
+  const dialogApi = Dialog.useDialogApi();
 
   const hasApiKey = createMemo(() => apiKey().trim().length > 0);
 
@@ -116,17 +150,19 @@ function AIReviewDialogContent(props: {
     return `${playerName} (${playerCharacter}) vs ${opponentName} (${opponentCharacter}) on ${stageName}`;
   });
 
-  onMount(() => {
-    void prepareStep(0);
+  // Watch for step changes and prepare the new step
+  createEffect(() => {
+    const step = props.currentStep();
+    void prepareStep(step);
   });
 
   async function prepareStep(stepIndex: number) {
-    setError(null);
+    props.setError(null);
     if (!hasApiKey()) {
-      setChatHistory([]);
+      props.setChatHistory([]);
       return;
     }
-    setIsBusy(true);
+    props.setIsBusy(true);
     try {
       const field = REVIEW_FIELDS[stepIndex];
       const systemMessage: ChatMessage = {
@@ -146,105 +182,83 @@ function AIReviewDialogContent(props: {
         systemMessage,
         kickoffUserMessage,
       ]);
-      setChatHistory([
+      props.setChatHistory([
         systemMessage,
         kickoffUserMessage,
         { role: "assistant", content: assistantReply },
       ]);
     } catch (err) {
-      setError(
+      props.setError(
         (err as Error).message ??
           "Failed to start AI conversation. Try again later."
       );
-      setChatHistory([]);
+      props.setChatHistory([]);
     } finally {
-      setIsBusy(false);
+      props.setIsBusy(false);
     }
   }
 
   async function handleSend(message: string) {
-    setIsBusy(true);
-    setError(null);
+    props.setIsBusy(true);
+    props.setError(null);
     const userMessage: ChatMessage = { role: "user", content: message };
-    setChatHistory((prev) => [...prev, userMessage]);
+    props.setChatHistory((prev) => [...prev, userMessage]);
     try {
-      const response = await sendChatMessage([...chatHistory(), userMessage]);
-      setChatHistory((prev) => [
+      const response = await sendChatMessage([...props.chatHistory(), userMessage]);
+      props.setChatHistory((prev) => [
         ...prev,
         { role: "assistant", content: response },
       ]);
     } catch (err) {
-      setError(
+      props.setError(
         (err as Error).message ??
           "The AI couldn't respond. Check your connection or API key."
       );
     } finally {
-      setIsBusy(false);
+      props.setIsBusy(false);
     }
   }
 
   async function handleSummarize() {
-    const field = REVIEW_FIELDS[currentStep()];
-    setIsBusy(true);
-    setError(null);
+    const field = REVIEW_FIELDS[props.currentStep()];
+    props.setIsBusy(true);
+    props.setError(null);
     try {
       const summary = await sendChatMessage([
-        ...chatHistory(),
+        ...props.chatHistory(),
         {
           role: "user",
           content: `Summarize the key insights from our conversation so I can write "${field.label}". Focus on actionable, first-person statements.`,
         },
       ]);
-      setDraftReview((prev) => ({
+      props.setDraftReview((prev) => ({
         ...prev,
         [field.key]: summary.trim(),
       }));
-      setHasUsedAi(true);
+      props.setHasUsedAi(true);
     } catch (err) {
-      setError(
+      props.setError(
         (err as Error).message ??
           "Unable to generate a summary. Please try again."
       );
     } finally {
-      setIsBusy(false);
+      props.setIsBusy(false);
     }
   }
 
-  async function goToStep(stepIndex: number) {
-    setCurrentStep(stepIndex);
-    await prepareStep(stepIndex);
-  }
 
   function handleManualUpdate(
     field: keyof ReviewNote["review"],
     value: string
   ) {
-    setDraftReview((prev) => ({
+    props.setDraftReview((prev) => ({
       ...prev,
       [field]: value,
     }));
   }
 
-  async function handleSave() {
-    setIsBusy(true);
-    setError(null);
-    try {
-      await props.onComplete({
-        review: draftReview(),
-        isAiGenerated: hasUsedAi(),
-      });
-      dialogApi().close();
-    } catch (err) {
-      setError(
-        (err as Error).message ?? "Failed to save review. Please try again."
-      );
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
   return (
-    <div class="flex max-h-[70vh] flex-col gap-5">
+    <div class="flex flex-col gap-5">
       <Show
         when={hasApiKey()}
         fallback={
@@ -255,21 +269,21 @@ function AIReviewDialogContent(props: {
       >
         <div class="flex items-center justify-between">
           <div class="text-sm font-medium text-slate-700">
-            Step {currentStep() + 1} of {REVIEW_FIELDS.length} ·{" "}
-            {REVIEW_FIELDS[currentStep()].label}
+            Step {props.currentStep() + 1} of {REVIEW_FIELDS.length} ·{" "}
+            {REVIEW_FIELDS[props.currentStep()].label}
           </div>
           <div class="text-xs text-slate-500">{matchupContext()}</div>
         </div>
         <ChatInterface
-          messages={chatHistory()}
+          messages={props.chatHistory()}
           onSend={handleSend}
-          isBusy={isBusy()}
+          isBusy={props.isBusy()}
           placeholder="Share what happened in that situation..."
           footer={() => (
             <div class="flex flex-col gap-2">
               <SecondaryButton
                 type="button"
-                disabled={isBusy()}
+                disabled={props.isBusy()}
                 onClick={() => void handleSummarize()}
               >
                 Generate AI Summary
@@ -284,14 +298,14 @@ function AIReviewDialogContent(props: {
         <div class="space-y-4">
           <For each={REVIEW_FIELDS}>
             {(field, index) => (
-              <Show when={index() === currentStep()}>
+              <Show when={index() === props.currentStep()}>
                 <div class="flex flex-col gap-2">
                   <label class="text-sm font-semibold text-slate-700">
                     {field.label}
                   </label>
                   <textarea
                     rows={4}
-                    value={draftReview()[field.key]}
+                    value={props.draftReview()[field.key]}
                     onInput={(event) =>
                       handleManualUpdate(field.key, event.currentTarget.value)
                     }
@@ -303,48 +317,85 @@ function AIReviewDialogContent(props: {
             )}
           </For>
         </div>
-        <Show when={error()}>
+        <Show when={props.error()}>
           <div class="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
-            {error()}
+            {props.error()}
           </div>
         </Show>
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <WhiteButton
-              type="button"
-              disabled={currentStep() === 0 || isBusy()}
-              onClick={() => void goToStep(currentStep() - 1)}
-            >
-              Previous
-            </WhiteButton>
-            <Show
-              when={currentStep() < REVIEW_FIELDS.length - 1}
-              fallback={
-                <PrimaryButton
-                  type="button"
-                  disabled={isBusy()}
-                  onClick={() => void handleSave()}
-                >
-                  Save Review
-                </PrimaryButton>
-              }
-            >
-              <PrimaryButton
-                type="button"
-                disabled={isBusy()}
-                onClick={() => void goToStep(currentStep() + 1)}
-              >
-                Next
-              </PrimaryButton>
-            </Show>
-          </div>
-          <div class="text-xs text-slate-500">
-            {hasUsedAi()
-              ? "AI assistance applied."
-              : "You can edit any field manually before saving."}
-          </div>
-        </div>
       </Show>
     </div>
+  );
+}
+
+function AIReviewDialogFooter(props: {
+  currentStep: Accessor<number>;
+  draftReview: Accessor<ReviewNote["review"]>;
+  isBusy: Accessor<boolean>;
+  setIsBusy: (busy: boolean | ((prev: boolean) => boolean)) => void;
+  hasUsedAi: Accessor<boolean>;
+  onComplete: (result: {
+    review: ReviewNote["review"];
+    isAiGenerated: boolean;
+  }) => Promise<void> | void;
+  onStepChange: (step: number) => void;
+}) {
+  const dialogApi = Dialog.useDialogApi();
+
+  async function handleSave() {
+    props.setIsBusy(true);
+    try {
+      await props.onComplete({
+        review: props.draftReview(),
+        isAiGenerated: props.hasUsedAi(),
+      });
+      dialogApi().close();
+    } catch (err) {
+      // Error handling is done in parent component
+    } finally {
+      props.setIsBusy(false);
+    }
+  }
+
+  const hasApiKey = createMemo(() => apiKey().trim().length > 0);
+
+  return (
+    <Show when={hasApiKey()}>
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <WhiteButton
+            type="button"
+            disabled={props.currentStep() === 0 || props.isBusy()}
+            onClick={() => props.onStepChange(props.currentStep() - 1)}
+          >
+            Previous
+          </WhiteButton>
+          <Show
+            when={props.currentStep() < REVIEW_FIELDS.length - 1}
+            fallback={
+              <PrimaryButton
+                type="button"
+                disabled={props.isBusy()}
+                onClick={() => void handleSave()}
+              >
+                Save Review
+              </PrimaryButton>
+            }
+          >
+            <PrimaryButton
+              type="button"
+              disabled={props.isBusy()}
+              onClick={() => props.onStepChange(props.currentStep() + 1)}
+            >
+              Next
+            </PrimaryButton>
+          </Show>
+        </div>
+        <div class="text-xs text-slate-500">
+          {props.hasUsedAi()
+            ? "AI assistance applied."
+            : "You can edit any field manually before saving."}
+        </div>
+      </div>
+    </Show>
   );
 }
