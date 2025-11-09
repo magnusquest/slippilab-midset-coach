@@ -39,21 +39,8 @@ export function ControllerIcon(props: IconProps) {
 // https://heroicons.com
 export function CoachIcon(props: IconProps) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke-width={1.5}
-      stroke="currentColor"
-      {...props}
-    >
-      <title>{props.title}</title>
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M7.5 8.25a4.5 4.5 0 119 0v.75M4.5 21a7.5 7.5 0 0115 0m-7.5-9.75c1.708 0 3.138 1.366 3.218 3.07.012.263-.208.48-.472.48h-5.492c-.264 0-.484-.217-.472-.48.08-1.704 1.51-3.07 3.218-3.07z"
-      />
-      <circle cx="18" cy="6" r="2" fill="currentColor" stroke="none" />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {...props}>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
     </svg>
   );
 }

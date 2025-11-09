@@ -1,12 +1,12 @@
-name: Auto Merge master to dev
+name: Auto Merge main to dev
 
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
-  merge-master-to-dev:
+  merge-main-to-dev:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -26,8 +26,8 @@ jobs:
       - name: Checkout dev branch
         run: git checkout dev
 
-      - name: Merge master into dev
-        run: git merge origin/master --no-edit
+      - name: Merge main into dev
+        run: git merge origin/main --no-edit
 
       - name: Push changes to dev
         run: git push origin dev
